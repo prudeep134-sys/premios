@@ -266,6 +266,12 @@
     </div>
 
     <div id="participacion-list" class="part-grid"></div>
+
+    <div class="card" style="margin-top:18px;">
+      <div><span class="cat-title">💾 Respaldo de votos</span></div>
+      <div class="cat-desc">Descarga una copia de todos los votos guardados hasta ahora en un archivo CSV (se abre en Excel). Útil para guardar una copia antes de cerrar las votaciones.</div>
+      <button class="btn-ghost" id="export-backup-btn" style="width:100%; text-align:center; padding:12px;">📥 Descargar respaldo (CSV)</button>
+    </div>
   </section>
 
   <!-- RESULTADOS -->
@@ -507,6 +513,45 @@ async function loadParticipacion(){
   renderParticipacionList(votes);
 }
 document.getElementById('refresh-participacion').addEventListener('click', loadParticipacion);
+
+// ---------- Respaldo CSV ----------
+function csvEscape(val){
+  const s = String(val ?? '');
+  if(/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+  return s;
+}
+
+document.getElementById('export-backup-btn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('export-backup-btn');
+  const originalText = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Generando…';
+  try{
+    const votes = await fetchAllVotes();
+    const header = ['Votante', 'Fecha y hora', ...CATEGORIES.map(c=>c.title)];
+    const rows = [header];
+    NOMBRES.forEach(name=>{
+      const v = votes.find(x=>x.voter===name);
+      const fecha = v ? new Date(v.timestamp).toLocaleString('es-CL') : '';
+      const row = [name, fecha];
+      CATEGORIES.forEach(cat=>{
+        row.push(v && v.selections ? (v.selections[cat.id] || '') : '');
+      });
+      rows.push(row);
+    });
+    const csvContent = rows.map(r=>r.map(csvEscape).join(',')).join('\r\n');
+    const blob = new Blob(['\uFEFF' + csvContent], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateTag = new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
+    a.href = url; a.download = 'respaldo-votos-dental-awards-' + dateTag + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }catch(e){
+    alert('No se pudo generar el respaldo. Intenta de nuevo.');
+  }finally{
+    btn.disabled = false; btn.textContent = originalText;
+  }
+});
 
 // ---------- Results ----------
 function renderGlobalRanking(votes){
