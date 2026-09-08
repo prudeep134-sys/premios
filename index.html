@@ -322,7 +322,8 @@ const CATEGORIES = [
   {id:'fiesta', emoji:'🎉', title:'Alma de la Fiesta', desc:'Para quien organiza los cumpleaños, celebraciones y panoramas del equipo.'},
   {id:'tetris', emoji:'🧩', title:'Agenda Tetris', desc:'Para quien logra encajar hasta el paciente más imposible en la hora que sea.'},
   {id:'creativo', emoji:'🎨', title:'Toque Creativo', desc:'Para quien decora, diseña o le pone color a cada actividad del equipo.'},
-  {id:'multitasking', emoji:'🙌', title:'Multitasking Nivel Dios', desc:'Para quien hace mil cosas a la vez sin perder la cabeza (ni la sonrisa).'}
+  {id:'multitasking', emoji:'🙌', title:'Multitasking Nivel Dios', desc:'Para quien hace mil cosas a la vez sin perder la cabeza (ni la sonrisa).'},
+  {id:'organizado', emoji:'📚', title:'El/la Más Organizado/a', desc:'Para quien tiene todo etiquetado, ordenado y a la mano cuando nadie más lo encuentra.'}
 ];
 
 const NOMBRES = ['Erika Plaza','Felipe Valdés','Camila Zapata','Debora Sagardia','Mónica Ruminot','Karina Cancino','Ricardo Vargas','Constanza Vera','Stephanie Villarroel','Valentina Soto'];
@@ -330,6 +331,9 @@ const NOMBRES = ['Erika Plaza','Felipe Valdés','Camila Zapata','Debora Sagardia
 function slugify(str){
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 }
+
+// URL del Google Apps Script conectado a la planilla de Google Sheets.
+const SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxxrz_qT1Ak3VbyHR5ySgSGHcx0kJcdBVxRLA2DPZVccOj2JSWofvx3xc9-h1u3AVQl/exec';
 
 // ---------- Build voting form ----------
 const voterSelect = document.getElementById('voter-select');
@@ -358,6 +362,15 @@ function showBanner(msg, type){
   b.textContent = msg;
   b.className = 'banner show ' + type;
 }
+
+// Aviso no bloqueante si detecta navegador embebido (WhatsApp/Instagram/Facebook).
+(function checkInAppBrowser(){
+  const ua = navigator.userAgent || '';
+  const isInApp = /FBAN|FBAV|Instagram|WhatsApp/i.test(ua);
+  if(isInApp){
+    showBanner('Estás en el navegador interno de WhatsApp/Instagram. Si el voto no se guarda, toca ⋮ o el ícono de compartir y elige "Abrir en el navegador".', 'err');
+  }
+})();
 
 // Prefill previous vote when voter changes
 voterSelect.addEventListener('change', async ()=>{
@@ -393,18 +406,35 @@ document.getElementById('submit-btn').addEventListener('click', async ()=>{
   }
   const btn = document.getElementById('submit-btn');
   btn.disabled = true; btn.textContent = 'Guardando…';
+
+  let storageOk = false;
+  let sheetOk = false;
+
   try{
     const key = 'voto:' + slugify(name);
     await window.storage.set(key, JSON.stringify({voter:name, timestamp:Date.now(), selections}), true);
+    storageOk = true;
+  }catch(e){ storageOk = false; }
+
+  try{
+    await fetch(SHEETS_WEBAPP_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify({voter:name, selections})
+    });
+    sheetOk = true; // no-cors no deja leer la respuesta, pero si no lanzó error, la petición salió
+  }catch(e){ sheetOk = false; }
+
+  if(storageOk || sheetOk){
     showBanner('¡Listo, ' + name + '! Tus votos quedaron registrados.', 'ok');
     if(typeof window.confetti === 'function'){
       window.confetti({particleCount:120, spread:80, startVelocity:38, origin:{y:0.6}, colors:['#E8B84B','#FF6F59','#F6EFE3','#C6952A']});
     }
-  }catch(e){
-    showBanner('No se pudo guardar el voto. Intenta de nuevo.', 'err');
-  }finally{
-    btn.disabled = false; btn.textContent = 'Enviar mis votos';
+  }else{
+    showBanner('No se pudo guardar el voto. Revisa tu conexión e intenta de nuevo.', 'err');
   }
+  btn.disabled = false; btn.textContent = 'Enviar mis votos';
 });
 
 // ---------- Tabs ----------
