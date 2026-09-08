@@ -20,6 +20,7 @@
     --cream: #F6EFE3;
     --muted: #B7ACD6;
     --line: rgba(232,184,75,0.22);
+    --ok: #3FA792;
     --radius: 14px;
   }
   *{box-sizing:border-box;}
@@ -46,11 +47,11 @@
     color:var(--gold);
   }
   .brand small{font-family:'DM Sans',sans-serif; font-weight:500; color:var(--muted); font-size:0.72rem;}
-  .tabs{display:flex; gap:4px; margin-top:12px;}
+  .tabs{display:flex; gap:4px; margin-top:12px; overflow-x:auto;}
   .tab-btn{
     flex:1; text-align:center; padding:10px 6px 12px; background:none; border:none;
-    color:var(--muted); font-family:'DM Sans',sans-serif; font-weight:600; font-size:0.86rem;
-    cursor:pointer; border-bottom:2px solid transparent;
+    color:var(--muted); font-family:'DM Sans',sans-serif; font-weight:600; font-size:0.82rem;
+    cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap;
   }
   .tab-btn.active{color:var(--gold); border-bottom:2px solid var(--gold);}
 
@@ -130,6 +131,36 @@
 
   .empty{text-align:center; padding:40px 10px; color:var(--muted); font-size:0.9rem;}
 
+  /* Participation tracker */
+  .progress-wrap{display:flex; align-items:center; gap:10px; margin:10px 0 16px;}
+  .progress-track{flex:1; background:var(--bg-alt); border-radius:8px; height:10px; overflow:hidden;}
+  .progress-fill{height:100%; background:linear-gradient(90deg, var(--teal), var(--gold)); border-radius:8px; transition:width .3s ease;}
+  .progress-pct{font-weight:700; font-size:0.85rem; color:var(--gold); min-width:38px; text-align:right;}
+  .part-grid{display:flex; flex-direction:column; gap:8px;}
+  .part-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 12px; border-radius:10px; background:var(--bg-alt);
+    font-size:0.9rem;
+  }
+  .part-row .name{font-weight:600;}
+  .status-pill{
+    font-size:0.72rem; font-weight:700; padding:4px 10px; border-radius:999px;
+    display:inline-flex; align-items:center; gap:5px;
+  }
+  .status-pill.voted{background:rgba(63,167,146,0.18); color:var(--teal);}
+  .status-pill.pending{background:rgba(255,111,89,0.14); color:var(--coral);}
+  .part-filter{display:flex; gap:6px; margin-bottom:12px;}
+  .chip{
+    padding:6px 12px; border-radius:999px; border:1px solid var(--line); background:transparent;
+    color:var(--muted); font-size:0.78rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif;
+  }
+  .chip.active{background:var(--gold); color:#241C50; border-color:var(--gold);}
+  .remind-btn{
+    background:none; border:1px solid var(--gold-deep); color:var(--gold);
+    font-size:0.72rem; font-weight:600; padding:5px 10px; border-radius:8px; cursor:pointer;
+    font-family:'DM Sans',sans-serif;
+  }
+
   .diploma-frame{
     padding:7px; border-radius:16px; margin-bottom:10px;
     background: linear-gradient(135deg, var(--coral), var(--gold), var(--teal), var(--violet));
@@ -180,6 +211,7 @@
     <div class="brand">🏆 Premios Dental Awards <small>2026</small></div>
     <nav class="tabs">
       <button class="tab-btn active" data-tab="votar">Votar</button>
+      <button class="tab-btn" data-tab="participacion">Participación</button>
       <button class="tab-btn" data-tab="resultados">Resultados</button>
       <button class="tab-btn" data-tab="diplomas">Diplomas</button>
     </nav>
@@ -209,6 +241,31 @@
     <div class="submit-bar">
       <button id="submit-btn" class="btn">Enviar mis votos</button>
     </div>
+  </section>
+
+  <!-- PARTICIPACIÓN -->
+  <section id="panel-participacion" class="tab-panel">
+    <div class="res-head">
+      <h2>Participación</h2>
+      <button class="btn-ghost" id="refresh-participacion">Actualizar</button>
+    </div>
+    <p class="muted-small">Quién ya votó y a quién le falta. Se actualiza en tiempo real para todo el equipo.</p>
+
+    <div class="card">
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill" id="part-progress-fill" style="width:0%"></div></div>
+        <span class="progress-pct" id="part-progress-pct">0%</span>
+      </div>
+      <p class="muted-small" id="part-summary-label">Cargando…</p>
+    </div>
+
+    <div class="part-filter">
+      <button class="chip active" data-filter="todos">Todos</button>
+      <button class="chip" data-filter="votaron">Votaron</button>
+      <button class="chip" data-filter="pendientes">Pendientes</button>
+    </div>
+
+    <div id="participacion-list" class="part-grid"></div>
   </section>
 
   <!-- RESULTADOS -->
@@ -353,6 +410,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
     if(btn.dataset.tab === 'resultados') loadResults();
     if(btn.dataset.tab === 'diplomas') loadDiplomas();
+    if(btn.dataset.tab === 'participacion') loadParticipacion();
   });
 });
 
@@ -392,6 +450,64 @@ function winnersOf(counts){
   return {names, max};
 }
 
+// ---------- Participación (quién votó / quién falta) ----------
+let currentPartFilter = 'todos';
+
+document.querySelectorAll('.part-filter .chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('.part-filter .chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    currentPartFilter = chip.dataset.filter;
+    renderParticipacionList(window.__lastVotes || []);
+  });
+});
+
+function renderParticipacionList(votes){
+  const votedNames = new Set(votes.map(v=>v.voter));
+  const listEl = document.getElementById('participacion-list');
+  let names = NOMBRES.slice();
+  if(currentPartFilter === 'votaron') names = names.filter(n=>votedNames.has(n));
+  if(currentPartFilter === 'pendientes') names = names.filter(n=>!votedNames.has(n));
+
+  // Votaron primero dentro de "todos" también se ve bien ordenado alfabético; dejamos alfabético estable
+  if(names.length === 0){
+    listEl.innerHTML = '<div class="empty">Nadie en este filtro por ahora.</div>';
+    return;
+  }
+
+  listEl.innerHTML = names.map(name=>{
+    const voted = votedNames.has(name);
+    const voteData = voted ? votes.find(v=>v.voter===name) : null;
+    const catCount = voteData ? Object.keys(voteData.selections||{}).length : 0;
+    return `
+      <div class="part-row">
+        <span class="name">${name}</span>
+        ${voted
+          ? `<span class="status-pill voted">✅ Votó · ${catCount} cat.</span>`
+          : `<span class="status-pill pending">⏳ Pendiente</span>`
+        }
+      </div>`;
+  }).join('');
+}
+
+async function loadParticipacion(){
+  const listEl = document.getElementById('participacion-list');
+  listEl.innerHTML = '<div class="empty">Cargando participación…</div>';
+  const votes = await fetchAllVotes();
+  window.__lastVotes = votes;
+  const votedNames = new Set(votes.map(v=>v.voter));
+  const votedCount = NOMBRES.filter(n=>votedNames.has(n)).length;
+  const pct = NOMBRES.length ? Math.round((votedCount/NOMBRES.length)*100) : 0;
+
+  document.getElementById('part-progress-fill').style.width = pct + '%';
+  document.getElementById('part-progress-pct').textContent = pct + '%';
+  document.getElementById('part-summary-label').textContent =
+    votedCount + ' de ' + NOMBRES.length + ' personas han votado' + (pct===100 ? ' — ¡completo! 🎉' : '.');
+
+  renderParticipacionList(votes);
+}
+document.getElementById('refresh-participacion').addEventListener('click', loadParticipacion);
+
 // ---------- Results ----------
 function renderGlobalRanking(votes){
   const container = document.getElementById('global-ranking');
@@ -430,7 +546,9 @@ async function loadResults(){
   const totalLabel = document.getElementById('total-votes-label');
   listEl.innerHTML = '<div class="empty">Cargando resultados…</div>';
   const votes = await fetchAllVotes();
-  totalLabel.textContent = votes.length + (votes.length === 1 ? ' persona ha votado' : ' personas han votado');
+  window.__lastVotes = votes;
+  const votedCount = NOMBRES.filter(n=>votes.some(v=>v.voter===n)).length;
+  totalLabel.textContent = votedCount + ' de ' + NOMBRES.length + ' personas han votado';
   renderGlobalRanking(votes);
   if(votes.length === 0){
     listEl.innerHTML = '<div class="empty">Aún no hay votos. ¡Sé el primero en votar! 🏆</div>';
@@ -571,6 +689,7 @@ document.getElementById('print-all').addEventListener('click', ()=> window.print
 
 // ---------- Init ----------
 loadResults();
+loadParticipacion();
 </script>
 
 </body>
