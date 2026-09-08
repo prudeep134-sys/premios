@@ -417,13 +417,13 @@ document.getElementById('submit-btn').addEventListener('click', async ()=>{
   }catch(e){ storageOk = false; }
 
   try{
-    await fetch(SHEETS_WEBAPP_URL, {
+    const res = await fetch(SHEETS_WEBAPP_URL, {
       method: 'POST',
-      mode: 'no-cors',
       headers: {'Content-Type': 'text/plain;charset=utf-8'},
       body: JSON.stringify({voter:name, selections})
     });
-    sheetOk = true; // no-cors no deja leer la respuesta, pero si no lanzó error, la petición salió
+    const data = await res.json();
+    sheetOk = !!(data && data.ok);
   }catch(e){ sheetOk = false; }
 
   if(storageOk || sheetOk){
