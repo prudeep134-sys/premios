@@ -1,7 +1,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Dancing+Script:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
 
 <style>
@@ -285,6 +284,14 @@
   }
   .pda-debug[hidden]{display:none;}
 
+  .pda-sheet-note{
+    font-size:12px;
+    color:var(--ink-soft);
+    text-align:center;
+    margin:-8px 0 16px;
+  }
+  .pda-sheet-note a{color:var(--teal);font-weight:700;}
+
   @media (max-width:480px){
     .pda-hero{padding:30px 16px 24px;}
     .pda-item{grid-template-columns:26px 1fr;}
@@ -297,7 +304,7 @@
   <div class="pda-hero">
     <p class="pda-kicker">CESFAM · EQUIPO DENTAL</p>
     <h1 class="pda-title">🏆 Premios Dental Awards 2026 😂</h1>
-    <p class="pda-sub">Vota por tus compañeros y compañeras en 20 categorías. Cuando todo el equipo haya votado, descubran a los ganadores y descarguen sus diplomas.</p>
+    <p class="pda-sub">Vota por tus compañeros y compañeras en 20 categorías. Cada voto se guarda al instante en la planilla del equipo — sin duplicados — y los resultados se actualizan en tiempo real.</p>
   </div>
 
   <div class="pda-tabs">
@@ -321,8 +328,9 @@
   <div id="pda-view-resultados" hidden>
     <div class="pda-btn-row">
       <button class="pda-btn pda-btn-secondary" id="pda-refresh" type="button">🔄 Actualizar resultados</button>
-      <button class="pda-btn pda-btn-secondary" id="pda-export" type="button">📊 Exportar a Excel</button>
+      <button class="pda-btn pda-btn-secondary" id="pda-open-sheet" type="button">📊 Abrir planilla</button>
     </div>
+    <p class="pda-sheet-note">Los resultados que ves aquí vienen directo de la planilla — no hay una copia aparte.</p>
     <p class="pda-votecount" id="pda-votecount">Aún no se han cargado resultados.</p>
     <pre class="pda-debug" id="pda-results-debug" hidden></pre>
     <div id="pda-results-list"></div>
@@ -334,6 +342,17 @@
 
 <script>
 (function(){
+
+  // ======================================================================
+  // CONFIGURACIÓN — reemplaza estas dos constantes después de desplegar
+  // Code.gs (ver instrucciones dentro de ese archivo).
+  // ======================================================================
+  var APPS_SCRIPT_URL = "PEGA_AQUI_LA_URL_DE_TU_APP_WEB";
+  var SPREADSHEET_URL = "PEGA_AQUI_EL_LINK_DE_TU_GOOGLE_SHEET";
+
+  function backendConfigured(){
+    return APPS_SCRIPT_URL.indexOf("https://script.google.com/macros/s/AKfycbyw6LK-mZPR6yM-gZgs2XzKwPzHhilIjbzVLRK0dum-xwaIRx8IkvtgtJ3Ksdt5Cv2zpA/exec") === -1 && APPS_SCRIPT_URL.indexOf("http") === 0;
+  }
 
   var NOMBRES = ["Erika Plaza","Felipe Valdés","Valentina Soto","Camila Zapata","Ricardo Vargas","Constanza Vera","Stephanie Villarroel","Karina Cancino","Debora Sagardia","Mónica Ruminot"];
 
@@ -361,7 +380,7 @@
   ];
 
   var lastTallies = null;   // {catId: {name: count}}
-  var lastRawVotes = [];    // [{voter, ts, selections}]
+  var lastRawVotes = [];    // [{voter, selections}]
   var lastTotalVotantes = 0;
 
   function $(id){ return document.getElementById(id); }
@@ -371,13 +390,6 @@
     el.hidden = false;
     el.textContent = message;
     console.error("[Premios Dental Awards]", message);
-  }
-
-  function storageAvailable(){
-    return !!(window.storage &&
-      typeof window.storage.set === "function" &&
-      typeof window.storage.get === "function" &&
-      typeof window.storage.list === "function");
   }
 
   // ---------- Render: voter select ----------
@@ -448,7 +460,7 @@
     refreshResults();
   });
 
-  // ---------- Submit votes ----------
+  // ---------- Submit votes (va directo a la planilla, sin duplicados) ----------
   var statusEl = $("pda-vote-status");
   var voteDebugEl = $("pda-vote-debug");
 
@@ -457,10 +469,10 @@
     statusEl.textContent = "";
     voteDebugEl.hidden = true;
 
-    if(!storageAvailable()){
+    if(!backendConfigured()){
       statusEl.className = "pda-status err";
-      statusEl.textContent = "El almacenamiento no está disponible en este entorno.";
-      showDebug(voteDebugEl, "window.storage no existe o le faltan métodos (set/get/list). Esto pasa si el artifact se abre fuera de un entorno de Claude que soporte almacenamiento persistente.");
+      statusEl.textContent = "La planilla aún no está conectada.";
+      showDebug(voteDebugEl, "Falta configurar APPS_SCRIPT_URL en este archivo con la URL de tu app web de Apps Script (ver instrucciones en Code.gs).");
       return;
     }
 
@@ -487,15 +499,23 @@
 
     try{
       var payload = { voter: voter, ts: Date.now(), selections: selections };
-      var result = await window.storage.set("voto:" + voter, JSON.stringify(payload), true);
-      if(!result){
+      // Content-Type de texto plano a propósito: evita el preflight CORS
+      // que Apps Script no responde bien.
+      var resp = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      var json = await resp.json();
+
+      if(!json || !json.ok){
         statusEl.className = "pda-status err";
         statusEl.textContent = "No se pudo guardar tu voto. Intenta de nuevo.";
-        showDebug(voteDebugEl, "window.storage.set devolvió un valor vacío/falsy para la clave 'voto:" + voter + "'.");
+        showDebug(voteDebugEl, "Respuesta del backend: " + JSON.stringify(json));
         return;
       }
+
       statusEl.className = "pda-status ok";
-      statusEl.textContent = "¡Listo, " + voter + "! Tus votos quedaron guardados. 🎉";
+      statusEl.textContent = "¡Listo, " + voter + "! Tus votos quedaron guardados en la planilla. 🎉";
       if(typeof confetti === "function"){
         confetti({ particleCount: 140, spread: 80, origin:{y:0.6}, colors:["#E3A72B","#FF6B5E","#2FA79B","#FFF7E6"] });
       }
@@ -506,7 +526,7 @@
     }
   });
 
-  // ---------- Results ----------
+  // ---------- Results (leídos en vivo desde la planilla, misma fuente que "Abrir planilla") ----------
   var votecountEl = $("pda-votecount");
   var resultsList = $("pda-results-list");
   var resultsDebugEl = $("pda-results-debug");
@@ -516,68 +536,36 @@
     votecountEl.textContent = "Cargando resultados…";
     resultsList.innerHTML = "";
 
-    if(!storageAvailable()){
-      votecountEl.textContent = "El almacenamiento no está disponible en este entorno.";
-      showDebug(resultsDebugEl, "window.storage no existe o le faltan métodos (set/get/list) al momento de cargar resultados.");
+    if(!backendConfigured()){
+      votecountEl.textContent = "La planilla aún no está conectada.";
+      showDebug(resultsDebugEl, "Falta configurar APPS_SCRIPT_URL en este archivo con la URL de tu app web de Apps Script.");
       return;
     }
 
-    var keysResult;
+    var json;
     try{
-      keysResult = await window.storage.list("voto:", true);
+      var resp = await fetch(APPS_SCRIPT_URL, { method: "GET" });
+      json = await resp.json();
     }catch(e){
       votecountEl.textContent = "No se pudieron cargar los resultados.";
-      showDebug(resultsDebugEl, "Excepción en window.storage.list('voto:', true): " + (e && e.message ? e.message : String(e)));
-      return;
-    }
-    var keys = (keysResult && keysResult.keys) ? keysResult.keys : [];
-
-    if(keys.length === 0){
-      votecountEl.textContent = "0 de " + NOMBRES.length + " personas han votado.";
-      showDebug(resultsDebugEl, "storage.list('voto:', true) no devolvió ninguna clave. Si ya se enviaron votos, revisa que se estén guardando con shared=true (tercer parámetro true) y que la app no se haya reiniciado su estado.");
-      lastRawVotes = [];
-      lastTotalVotantes = 0;
+      showDebug(resultsDebugEl, "Excepción al leer la planilla: " + (e && e.message ? e.message : String(e)));
       return;
     }
 
-    var votes = [];
-    var readErrors = [];
-    for(var i=0;i<keys.length;i++){
-      try{
-        var r = await window.storage.get(keys[i], true);
-        if(r && r.value){
-          votes.push(JSON.parse(r.value));
-        }
-      }catch(e){
-        readErrors.push(keys[i] + ": " + (e && e.message ? e.message : String(e)));
-      }
+    if(!json || !json.ok){
+      votecountEl.textContent = "No se pudieron cargar los resultados.";
+      showDebug(resultsDebugEl, "Respuesta del backend: " + JSON.stringify(json));
+      return;
     }
 
-    if(readErrors.length){
-      showDebug(resultsDebugEl, "No se pudieron leer " + readErrors.length + " voto(s):\n" + readErrors.join("\n"));
-    }
+    lastTallies = json.tallies || {};
+    lastRawVotes = json.rawVotes || [];
+    lastTotalVotantes = json.totalVotantes || 0;
 
-    lastRawVotes = votes;
-    lastTotalVotantes = votes.length;
-
-    var tallies = {};
-    CATEGORIAS.forEach(function(cat){ tallies[cat.id] = {}; });
-
-    votes.forEach(function(v){
-      if(!v || !v.selections) return;
-      CATEGORIAS.forEach(function(cat){
-        var chosen = v.selections[cat.id];
-        if(chosen){
-          tallies[cat.id][chosen] = (tallies[cat.id][chosen] || 0) + 1;
-        }
-      });
-    });
-    lastTallies = tallies;
-
-    votecountEl.textContent = votes.length + " de " + NOMBRES.length + " personas han votado.";
+    votecountEl.textContent = lastTotalVotantes + " de " + NOMBRES.length + " personas han votado.";
 
     CATEGORIAS.forEach(function(cat){
-      var tally = tallies[cat.id];
+      var tally = lastTallies[cat.id] || {};
       var entries = Object.keys(tally).map(function(name){ return [name, tally[name]]; });
       entries.sort(function(a,b){ return b[1]-a[1]; });
 
@@ -631,43 +619,13 @@
 
   $("pda-refresh").addEventListener("click", refreshResults);
 
-  // ---------- Excel export ----------
-  $("pda-export").addEventListener("click", function(){
-    if(!lastTallies){
-      alert("Primero pulsa “Actualizar resultados”.");
+  // ---------- Abrir la planilla real (fuente única, sin exportar una copia aparte) ----------
+  $("pda-open-sheet").addEventListener("click", function(){
+    if(!SPREADSHEET_URL || SPREADSHEET_URL.indexOf("PEGA_AQUI") === 0){
+      alert("Falta configurar SPREADSHEET_URL con el link de tu Google Sheet.");
       return;
     }
-    if(typeof XLSX === "undefined"){
-      alert("No se pudo cargar el módulo de Excel. Intenta de nuevo en unos segundos.");
-      return;
-    }
-
-    var resumenRows = [["Categoría","Ganador/a","Votos"]];
-    CATEGORIAS.forEach(function(cat){
-      var tally = lastTallies[cat.id] || {};
-      var entries = Object.keys(tally).map(function(name){ return [name, tally[name]]; });
-      entries.sort(function(a,b){ return b[1]-a[1]; });
-      var max = entries.length ? entries[0][1] : 0;
-      var winners = entries.filter(function(e){ return e[1]===max; }).map(function(e){ return e[0]; });
-      resumenRows.push([cat.emoji + " " + cat.titulo, max>0 ? winners.join(" y ") : "(sin votos)", max]);
-    });
-
-    var detalleRows = [["Votante","Categoría","Persona elegida"]];
-    lastRawVotes.forEach(function(v){
-      CATEGORIAS.forEach(function(cat){
-        var chosen = v.selections ? v.selections[cat.id] : "";
-        if(chosen){ detalleRows.push([v.voter, cat.titulo, chosen]); }
-      });
-    });
-
-    var wb = XLSX.utils.book_new();
-    var ws1 = XLSX.utils.aoa_to_sheet(resumenRows);
-    var ws2 = XLSX.utils.aoa_to_sheet(detalleRows);
-    ws1["!cols"] = [{wch:34},{wch:26},{wch:8}];
-    ws2["!cols"] = [{wch:22},{wch:34},{wch:22}];
-    XLSX.utils.book_append_sheet(wb, ws1, "Resultados");
-    XLSX.utils.book_append_sheet(wb, ws2, "Detalle de votos");
-    XLSX.writeFile(wb, "Premios_Dental_Awards_2026.xlsx");
+    window.open(SPREADSHEET_URL, "_blank");
   });
 
   // ---------- Diploma (canvas) ----------
