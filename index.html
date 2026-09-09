@@ -347,11 +347,11 @@
   // CONFIGURACIÓN — reemplaza estas dos constantes después de desplegar
   // Code.gs (ver instrucciones dentro de ese archivo).
   // ======================================================================
-  var APPS_SCRIPT_URL = "PEGA_AQUI_LA_URL_DE_TU_APP_WEB";
-  var SPREADSHEET_URL = "PEGA_AQUI_EL_LINK_DE_TU_GOOGLE_SHEET";
+  var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyw6LK-mZPR6yM-gZgs2XzKwPzHhilIjbzVLRK0dum-xwaIRx8IkvtgtJ3Ksdt5Cv2zpA/exec";
+  var SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/13JF-TJKyjwQUNORscZ9hhCU53gTeRy5_Kis5N51QRn4/edit";
 
   function backendConfigured(){
-    return APPS_SCRIPT_URL.indexOf("https://script.google.com/macros/s/AKfycbyw6LK-mZPR6yM-gZgs2XzKwPzHhilIjbzVLRK0dum-xwaIRx8IkvtgtJ3Ksdt5Cv2zpA/exec") === -1 && APPS_SCRIPT_URL.indexOf("http") === 0;
+    return APPS_SCRIPT_URL.indexOf("PEGA_AQUI") === -1 && APPS_SCRIPT_URL.indexOf("http") === 0;
   }
 
   var NOMBRES = ["Erika Plaza","Felipe Valdés","Valentina Soto","Camila Zapata","Ricardo Vargas","Constanza Vera","Stephanie Villarroel","Karina Cancino","Debora Sagardia","Mónica Ruminot"];
