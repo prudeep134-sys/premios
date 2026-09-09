@@ -272,6 +272,19 @@
 
   #pda-view-resultados[hidden],#pda-view-votar[hidden]{display:none;}
 
+  .pda-debug{
+    margin-top:10px;
+    font-size:11px;
+    color:#a33;
+    background:#fff3f0;
+    border:1px dashed #e08;
+    border-radius:8px;
+    padding:8px 10px;
+    white-space:pre-wrap;
+    word-break:break-word;
+  }
+  .pda-debug[hidden]{display:none;}
+
   @media (max-width:480px){
     .pda-hero{padding:30px 16px 24px;}
     .pda-item{grid-template-columns:26px 1fr;}
@@ -302,6 +315,7 @@
 
     <button class="pda-btn pda-btn-primary" id="pda-submit" type="button">Enviar mis votos 🎉</button>
     <p class="pda-status" id="pda-vote-status"></p>
+    <pre class="pda-debug" id="pda-vote-debug" hidden></pre>
   </div>
 
   <div id="pda-view-resultados" hidden>
@@ -310,6 +324,7 @@
       <button class="pda-btn pda-btn-secondary" id="pda-export" type="button">📊 Exportar a Excel</button>
     </div>
     <p class="pda-votecount" id="pda-votecount">Aún no se han cargado resultados.</p>
+    <pre class="pda-debug" id="pda-results-debug" hidden></pre>
     <div id="pda-results-list"></div>
   </div>
 
@@ -350,6 +365,20 @@
   var lastTotalVotantes = 0;
 
   function $(id){ return document.getElementById(id); }
+
+  function showDebug(el, message){
+    if(!el) return;
+    el.hidden = false;
+    el.textContent = message;
+    console.error("[Premios Dental Awards]", message);
+  }
+
+  function storageAvailable(){
+    return !!(window.storage &&
+      typeof window.storage.set === "function" &&
+      typeof window.storage.get === "function" &&
+      typeof window.storage.list === "function");
+  }
 
   // ---------- Render: voter select ----------
   var voterSelect = $("pda-voter-select");
@@ -421,10 +450,19 @@
 
   // ---------- Submit votes ----------
   var statusEl = $("pda-vote-status");
+  var voteDebugEl = $("pda-vote-debug");
 
   $("pda-submit").addEventListener("click", async function(){
     statusEl.className = "pda-status";
     statusEl.textContent = "";
+    voteDebugEl.hidden = true;
+
+    if(!storageAvailable()){
+      statusEl.className = "pda-status err";
+      statusEl.textContent = "El almacenamiento no está disponible en este entorno.";
+      showDebug(voteDebugEl, "window.storage no existe o le faltan métodos (set/get/list). Esto pasa si el artifact se abre fuera de un entorno de Claude que soporte almacenamiento persistente.");
+      return;
+    }
 
     var voter = voterSelect.value;
     if(!voter){
@@ -453,6 +491,7 @@
       if(!result){
         statusEl.className = "pda-status err";
         statusEl.textContent = "No se pudo guardar tu voto. Intenta de nuevo.";
+        showDebug(voteDebugEl, "window.storage.set devolvió un valor vacío/falsy para la clave 'voto:" + voter + "'.");
         return;
       }
       statusEl.className = "pda-status ok";
@@ -463,34 +502,59 @@
     }catch(e){
       statusEl.className = "pda-status err";
       statusEl.textContent = "Ocurrió un error guardando tu voto.";
+      showDebug(voteDebugEl, "Excepción al guardar: " + (e && e.message ? e.message : String(e)));
     }
   });
 
   // ---------- Results ----------
   var votecountEl = $("pda-votecount");
   var resultsList = $("pda-results-list");
+  var resultsDebugEl = $("pda-results-debug");
 
   async function refreshResults(){
+    resultsDebugEl.hidden = true;
     votecountEl.textContent = "Cargando resultados…";
     resultsList.innerHTML = "";
+
+    if(!storageAvailable()){
+      votecountEl.textContent = "El almacenamiento no está disponible en este entorno.";
+      showDebug(resultsDebugEl, "window.storage no existe o le faltan métodos (set/get/list) al momento de cargar resultados.");
+      return;
+    }
 
     var keysResult;
     try{
       keysResult = await window.storage.list("voto:", true);
     }catch(e){
       votecountEl.textContent = "No se pudieron cargar los resultados.";
+      showDebug(resultsDebugEl, "Excepción en window.storage.list('voto:', true): " + (e && e.message ? e.message : String(e)));
       return;
     }
     var keys = (keysResult && keysResult.keys) ? keysResult.keys : [];
 
+    if(keys.length === 0){
+      votecountEl.textContent = "0 de " + NOMBRES.length + " personas han votado.";
+      showDebug(resultsDebugEl, "storage.list('voto:', true) no devolvió ninguna clave. Si ya se enviaron votos, revisa que se estén guardando con shared=true (tercer parámetro true) y que la app no se haya reiniciado su estado.");
+      lastRawVotes = [];
+      lastTotalVotantes = 0;
+      return;
+    }
+
     var votes = [];
+    var readErrors = [];
     for(var i=0;i<keys.length;i++){
       try{
         var r = await window.storage.get(keys[i], true);
         if(r && r.value){
           votes.push(JSON.parse(r.value));
         }
-      }catch(e){ /* skip unreadable entry */ }
+      }catch(e){
+        readErrors.push(keys[i] + ": " + (e && e.message ? e.message : String(e)));
+      }
+    }
+
+    if(readErrors.length){
+      showDebug(resultsDebugEl, "No se pudieron leer " + readErrors.length + " voto(s):\n" + readErrors.join("\n"));
     }
 
     lastRawVotes = votes;
