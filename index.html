@@ -1,771 +1,756 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Premios Dental Awards 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Dancing+Script:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
+
 <style>
   :root{
-    --bg: #150F2B;
-    --bg-alt: #1F1846;
-    --bg-card: #241C50;
-    --gold: #E8B84B;
-    --gold-deep: #C6952A;
-    --coral: #FF6F59;
-    --teal: #3FA792;
-    --violet: #8B5FBF;
-    --cream: #F6EFE3;
-    --muted: #B7ACD6;
-    --line: rgba(232,184,75,0.22);
-    --ok: #3FA792;
-    --radius: 14px;
+    --deep-1:#2B1140;
+    --deep-2:#4A1942;
+    --cream:#FFF7E6;
+    --cream-2:#FBEFD2;
+    --gold:#E3A72B;
+    --gold-dark:#B9821E;
+    --coral:#FF6B5E;
+    --teal:#2FA79B;
+    --ink:#241436;
+    --ink-soft:#6b5a86;
+    --radius-lg:22px;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background: radial-gradient(1200px 600px at 50% -10%, #2A2064 0%, var(--bg) 55%) fixed;
-    color: var(--cream);
-    font-family: 'DM Sans', sans-serif;
-    min-height:100vh;
-    -webkit-font-smoothing:antialiased;
+  #pda-root{
+    font-family:'Karla',-apple-system,'Segoe UI',sans-serif;
+    color:var(--ink);
+    background:transparent;
+    max-width:760px;
+    margin:0 auto;
+    padding:0 0 60px 0;
   }
-  .wrap{max-width:640px;margin:0 auto;padding:0 20px 100px;}
-
-  header{
-    position:sticky; top:0; z-index:20;
-    background: rgba(21,15,43,0.88);
-    backdrop-filter: blur(8px);
-    border-bottom:1px solid var(--line);
+  .pda-hero{
+    position:relative;
+    border-radius:var(--radius-lg);
+    overflow:hidden;
+    padding:38px 22px 30px;
+    text-align:center;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(227,167,43,0.35), transparent 45%),
+      radial-gradient(circle at 82% 20%, rgba(255,107,94,0.30), transparent 50%),
+      linear-gradient(160deg, var(--deep-1), var(--deep-2) 70%);
+    isolation:isolate;
   }
-  .header-inner{max-width:640px;margin:0 auto;padding:14px 20px 0;}
-  .brand{
-    display:flex; align-items:baseline; gap:8px;
-    font-family:'Fraunces', serif; font-weight:600; font-size:1.05rem;
+  .pda-hero::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      radial-gradient(rgba(255,255,255,0.12) 1.5px, transparent 1.5px);
+    background-size:26px 26px;
+    opacity:.35;
+    z-index:-1;
+  }
+  .pda-kicker{
+    font-family:'Karla',sans-serif;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:.12em;
     color:var(--gold);
+    margin:0 0 8px;
   }
-  .brand small{font-family:'DM Sans',sans-serif; font-weight:500; color:var(--muted); font-size:0.72rem;}
-  .tabs{display:flex; gap:4px; margin-top:12px; overflow-x:auto;}
-  .tab-btn{
-    flex:1; text-align:center; padding:10px 6px 12px; background:none; border:none;
-    color:var(--muted); font-family:'DM Sans',sans-serif; font-weight:600; font-size:0.82rem;
-    cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap;
+  .pda-title{
+    font-family:'Baloo 2',cursive;
+    font-weight:800;
+    color:var(--cream);
+    font-size:clamp(28px,7vw,42px);
+    line-height:1.1;
+    margin:0 0 10px;
+    text-shadow:0 3px 0 rgba(0,0,0,0.15);
   }
-  .tab-btn.active{color:var(--gold); border-bottom:2px solid var(--gold);}
-
-  .hero{padding:36px 0 20px; text-align:center; position:relative;}
-  .hero::before{
-    content:''; position:absolute; left:50%; top:-10px; transform:translateX(-50%);
-    width:280px; height:280px; border-radius:50%;
-    background: radial-gradient(circle, rgba(232,184,75,0.28) 0%, rgba(232,184,75,0) 70%);
-    animation: glow 2.4s ease-out 1;
-    pointer-events:none;
-  }
-  @keyframes glow{ from{opacity:0; transform:translateX(-50%) scale(0.7);} to{opacity:1; transform:translateX(-50%) scale(1);} }
-  @media (prefers-reduced-motion: reduce){ .hero::before{animation:none;} }
-  .hero h1{
-    font-family:'Fraunces', serif; font-weight:600; font-style:italic;
-    font-size:2rem; line-height:1.15; margin:0 0 10px; position:relative;
-  }
-  .hero p{color:var(--muted); font-size:0.95rem; max-width:420px; margin:0 auto; line-height:1.5; position:relative;}
-
-  .card{
-    background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius);
-    padding:18px 18px 20px; margin-bottom:14px;
+  .pda-sub{
+    color:#e7d9f5;
+    font-size:15px;
+    max-width:480px;
+    margin:0 auto;
+    line-height:1.5;
   }
 
-  label{display:block; font-weight:600; font-size:0.82rem; color:var(--gold); margin-bottom:6px;}
-  select{
-    width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--line);
-    background: var(--bg-alt); color:var(--cream); font-family:'DM Sans',sans-serif; font-size:0.95rem;
-    appearance:none; -webkit-appearance:none;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23E8B84B' stroke-width='2.5'><polyline points='6 9 12 15 18 9'/></svg>");
-    background-repeat:no-repeat; background-position:right 14px center;
+  .pda-tabs{
+    display:flex;
+    gap:6px;
+    background:var(--cream-2);
+    border-radius:999px;
+    padding:6px;
+    margin:18px 0 22px;
+    border:1px solid rgba(185,130,30,0.25);
   }
-  select:focus, button:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
-
-  .voter-card{border-color:var(--gold-deep); background:linear-gradient(180deg, #2B2160, #241C50);}
-
-  .cat-emoji{font-size:1.4rem; margin-right:8px;}
-  .cat-title{font-family:'Fraunces', serif; font-weight:600; font-size:1.08rem; display:inline;}
-  .cat-desc{color:var(--muted); font-size:0.84rem; margin:6px 0 12px; line-height:1.45;}
-
-  .submit-bar{
-    position:sticky; bottom:0; padding:14px 20px calc(14px + env(safe-area-inset-bottom));
-    background:linear-gradient(0deg, var(--bg) 60%, transparent);
+  .pda-tab{
+    flex:1;
+    border:none;
+    background:transparent;
+    padding:11px 10px;
+    border-radius:999px;
+    font-family:'Baloo 2',cursive;
+    font-weight:600;
+    font-size:15px;
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:background .2s ease, color .2s ease;
   }
-  .btn{
-    display:block; width:100%; padding:15px; border:none; border-radius:12px;
-    font-family:'DM Sans',sans-serif; font-weight:700; font-size:0.98rem; cursor:pointer;
-    background:var(--coral); color:#1B0E0A;
-  }
-  .btn:disabled{opacity:0.6; cursor:default;}
-  .btn-ghost{
-    background:transparent; border:1px solid var(--gold-deep); color:var(--gold);
-    padding:10px 14px; border-radius:10px; font-weight:600; font-size:0.85rem; cursor:pointer;
-    font-family:'DM Sans',sans-serif;
-  }
-  .banner{
-    border-radius:10px; padding:12px 14px; font-size:0.88rem; margin-bottom:14px;
-    display:none;
-  }
-  .banner.show{display:block;}
-  .banner.ok{background:rgba(232,184,75,0.14); border:1px solid var(--gold-deep); color:var(--gold);}
-  .banner.err{background:rgba(255,111,89,0.14); border:1px solid var(--coral); color:var(--coral);}
-
-  .tab-panel{display:none;}
-  .tab-panel.active{display:block;}
-
-  .res-head{display:flex; align-items:center; justify-content:space-between; margin:26px 0 14px;}
-  .res-head h2{font-family:'Fraunces',serif; font-weight:600; font-size:1.3rem; margin:0;}
-  .muted-small{color:var(--muted); font-size:0.8rem;}
-
-  .bar-row{margin-bottom:10px;}
-  .bar-row-top{display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;}
-  .bar-name{font-weight:600;}
-  .bar-name.winner{color:var(--gold);}
-  .bar-track{background:var(--bg-alt); border-radius:6px; height:8px; overflow:hidden;}
-  .bar-fill{height:100%; background:linear-gradient(90deg, var(--gold-deep), var(--gold)); border-radius:6px;}
-
-  .empty{text-align:center; padding:40px 10px; color:var(--muted); font-size:0.9rem;}
-
-  /* Participation tracker */
-  .progress-wrap{display:flex; align-items:center; gap:10px; margin:10px 0 16px;}
-  .progress-track{flex:1; background:var(--bg-alt); border-radius:8px; height:10px; overflow:hidden;}
-  .progress-fill{height:100%; background:linear-gradient(90deg, var(--teal), var(--gold)); border-radius:8px; transition:width .3s ease;}
-  .progress-pct{font-weight:700; font-size:0.85rem; color:var(--gold); min-width:38px; text-align:right;}
-  .part-grid{display:flex; flex-direction:column; gap:8px;}
-  .part-row{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:10px 12px; border-radius:10px; background:var(--bg-alt);
-    font-size:0.9rem;
-  }
-  .part-row .name{font-weight:600;}
-  .status-pill{
-    font-size:0.72rem; font-weight:700; padding:4px 10px; border-radius:999px;
-    display:inline-flex; align-items:center; gap:5px;
-  }
-  .status-pill.voted{background:rgba(63,167,146,0.18); color:var(--teal);}
-  .status-pill.pending{background:rgba(255,111,89,0.14); color:var(--coral);}
-  .part-filter{display:flex; gap:6px; margin-bottom:12px;}
-  .chip{
-    padding:6px 12px; border-radius:999px; border:1px solid var(--line); background:transparent;
-    color:var(--muted); font-size:0.78rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif;
-  }
-  .chip.active{background:var(--gold); color:#241C50; border-color:var(--gold);}
-  .remind-btn{
-    background:none; border:1px solid var(--gold-deep); color:var(--gold);
-    font-size:0.72rem; font-weight:600; padding:5px 10px; border-radius:8px; cursor:pointer;
-    font-family:'DM Sans',sans-serif;
+  .pda-tab.active{
+    background:linear-gradient(135deg,var(--coral),var(--gold));
+    color:#fff;
+    box-shadow:0 4px 10px rgba(227,107,94,0.35);
   }
 
-  .diploma-frame{
-    padding:7px; border-radius:16px; margin-bottom:10px;
-    background: linear-gradient(135deg, var(--coral), var(--gold), var(--teal), var(--violet));
+  .pda-field label{
+    display:block;
+    font-weight:700;
+    font-size:14px;
+    margin-bottom:6px;
+    color:var(--ink);
   }
-  .diploma{
-    background: linear-gradient(180deg, #FFF8E9, #FBEFD4);
-    color:#3A2A12; border-radius:11px; padding:34px 24px; margin-bottom:0;
-    position:relative; text-align:center; overflow:hidden;
+  select.pda-select{
+    width:100%;
+    padding:12px 14px;
+    border-radius:14px;
+    border:1.5px solid #e3d6c4;
+    background:#fff;
+    font-family:'Karla',sans-serif;
+    font-size:15px;
+    color:var(--ink);
+    appearance:none;
+    background-image:linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%), linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
+    background-position:calc(100% - 20px) center, calc(100% - 15px) center;
+    background-size:5px 5px, 5px 5px;
+    background-repeat:no-repeat;
   }
-  .diploma::before{
-    content:''; position:absolute; inset:8px; border:1px solid var(--gold-deep); border-radius:6px; pointer-events:none;
-  }
-  .confetti-dot{position:absolute; border-radius:50%; opacity:0.9;}
-  .dot-a{width:11px; height:11px; background:var(--coral); top:16px; left:18px;}
-  .dot-b{width:8px; height:8px; background:var(--teal); top:24px; right:24px;}
-  .dot-c{width:9px; height:9px; background:var(--gold-deep); bottom:20px; left:26px;}
-  .dot-d{width:7px; height:7px; background:var(--violet); bottom:28px; right:20px;}
-  .diploma-eyebrow{font-size:0.68rem; letter-spacing:0.12em; color:#8A6A2A; font-weight:700;}
-  .diploma-cat{font-family:'Fraunces',serif; font-weight:600; font-size:1.2rem; margin:14px 0 0;}
-  .diploma-divider{width:64px; height:3px; border-radius:2px; margin:12px auto 0; background:linear-gradient(90deg, var(--coral), var(--gold), var(--teal));}
-  .diploma-given{font-style:italic; color:#7A5C22; font-size:0.9rem; margin-top:16px; font-family:'Fraunces',serif;}
-  .diploma-name{font-family:'Fraunces',serif; font-weight:700; font-size:1.7rem; margin:6px 0 14px; color:#5B3E10;}
-  .diploma-desc{font-size:0.8rem; color:#6b5327; max-width:340px; margin:0 auto; line-height:1.5;}
-  .diploma-message{
-    margin:16px auto 0; max-width:320px; padding:12px 16px; border-radius:10px;
-    background:rgba(255,111,89,0.14); color:#B5402C; font-size:0.83rem; font-style:italic; line-height:1.55;
-  }
-  .diploma-date{margin-top:16px; font-size:0.72rem; color:#8A6A2A;}
-  .diploma-print{margin-top:14px;}
-  .diploma-card-wrap{margin-bottom:22px;}
-  .diploma-actions{display:flex; justify-content:center;}
-  .diploma-download-btn:disabled{opacity:0.6; cursor:default;}
+  select.pda-select:focus{outline:2px solid var(--teal);outline-offset:1px;}
 
-  @media print{
-    header, .tabs, .submit-bar, .no-print, .banner{display:none !important;}
-    body{background:white; color:black;}
-    .tab-panel{display:none !important;}
-    #panel-diplomas{display:block !important;}
-    .diploma-card-wrap{page-break-after:always; box-shadow:none;}
-    .wrap{padding:0; max-width:100%;}
+  .pda-voter{
+    background:var(--cream);
+    border:1.5px solid #eddcb8;
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:20px;
+  }
+
+  ol.pda-program{
+    list-style:none;
+    margin:0 0 22px;
+    padding:0;
+    counter-reset:none;
+  }
+  .pda-item{
+    display:grid;
+    grid-template-columns:38px 1fr;
+    gap:10px;
+    padding:16px 4px;
+    border-bottom:1px dashed #d9c8a8;
+  }
+  .pda-item:first-child{border-top:1px dashed #d9c8a8;}
+  .pda-item:nth-child(even){background:rgba(227,167,43,0.06);}
+  .pda-num{
+    font-family:'Baloo 2',cursive;
+    font-weight:700;
+    color:var(--gold-dark);
+    font-size:18px;
+    padding-top:2px;
+  }
+  .pda-item-title{
+    font-family:'Baloo 2',cursive;
+    font-weight:600;
+    font-size:16.5px;
+    margin-bottom:3px;
+  }
+  .pda-item-desc{
+    font-size:13.5px;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+    line-height:1.4;
+  }
+
+  .pda-btn{
+    display:inline-block;
+    width:100%;
+    text-align:center;
+    border:none;
+    border-radius:14px;
+    padding:15px 18px;
+    font-family:'Baloo 2',cursive;
+    font-weight:700;
+    font-size:16px;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .pda-btn:active{transform:scale(0.98);}
+  .pda-btn-primary{
+    background:linear-gradient(135deg,var(--coral),var(--gold));
+    color:#fff;
+    box-shadow:0 6px 16px rgba(227,107,94,0.35);
+  }
+  .pda-btn-secondary{
+    background:#fff;
+    color:var(--teal);
+    border:1.5px solid var(--teal);
+  }
+  .pda-btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+  .pda-btn-row .pda-btn{width:auto;flex:1;min-width:160px;padding:12px 14px;font-size:14.5px;}
+  .pda-btn-diploma{
+    margin-top:10px;
+    background:var(--ink);
+    color:var(--gold);
+    border:none;
+    border-radius:12px;
+    padding:10px 14px;
+    font-family:'Baloo 2',cursive;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+  }
+
+  .pda-status{
+    text-align:center;
+    font-size:14px;
+    font-weight:600;
+    margin-top:12px;
+    min-height:20px;
+  }
+  .pda-status.ok{color:var(--teal);}
+  .pda-status.err{color:var(--coral);}
+
+  .pda-votecount{
+    font-size:13.5px;
+    color:var(--ink-soft);
+    font-weight:600;
+    align-self:center;
+  }
+
+  .pda-result-card{
+    background:var(--cream);
+    border:1.5px solid #eddcb8;
+    border-radius:16px;
+    padding:16px 18px;
+    margin-bottom:14px;
+  }
+  .pda-result-head{
+    font-family:'Baloo 2',cursive;
+    font-weight:600;
+    font-size:16.5px;
+    margin-bottom:6px;
+  }
+  .pda-result-winner{
+    font-weight:700;
+    color:var(--gold-dark);
+    font-size:15px;
+    margin-bottom:2px;
+  }
+  .pda-result-winner-votes{
+    font-weight:500;
+    color:var(--ink-soft);
+    font-size:13px;
+  }
+  .pda-result-empty{
+    color:var(--ink-soft);
+    font-size:13.5px;
+    font-style:italic;
+    margin:6px 0;
+  }
+  ul.pda-bars{list-style:none;margin:12px 0 0;padding:0;}
+  ul.pda-bars li{
+    display:grid;
+    grid-template-columns:100px 1fr 26px;
+    align-items:center;
+    gap:8px;
+    font-size:12.5px;
+    margin-bottom:6px;
+  }
+  ul.pda-bars li span:first-child{
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-soft);
+  }
+  ul.pda-bars li span:last-child{text-align:right;font-weight:700;color:var(--ink);}
+  .pda-bar-track{background:#eee0c4;border-radius:6px;height:8px;overflow:hidden;}
+  .pda-bar-fill{background:linear-gradient(90deg,var(--teal),var(--gold));height:100%;border-radius:6px;}
+
+  #pda-view-resultados[hidden],#pda-view-votar[hidden]{display:none;}
+
+  @media (max-width:480px){
+    .pda-hero{padding:30px 16px 24px;}
+    .pda-item{grid-template-columns:26px 1fr;}
+    ul.pda-bars li{grid-template-columns:74px 1fr 22px;}
   }
 </style>
-</head>
-<body>
 
-<header>
-  <div class="header-inner">
-    <div class="brand">🏆 Premios Dental Awards <small>2026</small></div>
-    <nav class="tabs">
-      <button class="tab-btn active" data-tab="votar">Votar</button>
-      <button class="tab-btn" data-tab="participacion">Participación</button>
-      <button class="tab-btn" data-tab="resultados">Resultados</button>
-      <button class="tab-btn" data-tab="diplomas">Diplomas</button>
-    </nav>
+<div id="pda-root">
+
+  <div class="pda-hero">
+    <p class="pda-kicker">CESFAM · EQUIPO DENTAL</p>
+    <h1 class="pda-title">🏆 Premios Dental Awards 2026 😂</h1>
+    <p class="pda-sub">Vota por tus compañeros y compañeras en 20 categorías. Cuando todo el equipo haya votado, descubran a los ganadores y descarguen sus diplomas.</p>
   </div>
-</header>
 
-<div class="wrap">
+  <div class="pda-tabs">
+    <button class="pda-tab active" id="pda-tab-votar" type="button">🗳️ Votar</button>
+    <button class="pda-tab" id="pda-tab-resultados" type="button">🏆 Resultados y diplomas</button>
+  </div>
 
-  <!-- VOTAR -->
-  <section id="panel-votar" class="tab-panel active">
-    <div class="hero">
-      <h1>Elige a tu equipo</h1>
-      <p>Comparte este link con el equipo para que todos voten. Puedes volver a votar cuando quieras: tu elección se actualiza, no se duplica.</p>
+  <div id="pda-view-votar">
+    <div class="pda-voter pda-field">
+      <label for="pda-voter-select">¿Quién eres tú?</label>
+      <select id="pda-voter-select" class="pda-select"><option value="">Selecciona tu nombre</option></select>
     </div>
 
-    <div id="banner" class="banner"></div>
+    <ol class="pda-program" id="pda-program-list"></ol>
 
-    <div class="card voter-card">
-      <label for="voter-select">¿Quién vota?</label>
-      <select id="voter-select">
-        <option value="">Selecciona tu nombre</option>
-      </select>
+    <button class="pda-btn pda-btn-primary" id="pda-submit" type="button">Enviar mis votos 🎉</button>
+    <p class="pda-status" id="pda-vote-status"></p>
+  </div>
+
+  <div id="pda-view-resultados" hidden>
+    <div class="pda-btn-row">
+      <button class="pda-btn pda-btn-secondary" id="pda-refresh" type="button">🔄 Actualizar resultados</button>
+      <button class="pda-btn pda-btn-secondary" id="pda-export" type="button">📊 Exportar a Excel</button>
     </div>
-
-    <div id="categories-list"></div>
-
-    <div class="submit-bar">
-      <button id="submit-btn" class="btn">Enviar mis votos</button>
-    </div>
-  </section>
-
-  <!-- PARTICIPACIÓN -->
-  <section id="panel-participacion" class="tab-panel">
-    <div class="res-head">
-      <h2>Participación</h2>
-      <button class="btn-ghost" id="refresh-participacion">Actualizar</button>
-    </div>
-    <p class="muted-small">Quién ya votó y a quién le falta. Se actualiza en tiempo real para todo el equipo.</p>
-
-    <div class="card">
-      <div class="progress-wrap">
-        <div class="progress-track"><div class="progress-fill" id="part-progress-fill" style="width:0%"></div></div>
-        <span class="progress-pct" id="part-progress-pct">0%</span>
-      </div>
-      <p class="muted-small" id="part-summary-label">Cargando…</p>
-    </div>
-
-    <div class="part-filter">
-      <button class="chip active" data-filter="todos">Todos</button>
-      <button class="chip" data-filter="votaron">Votaron</button>
-      <button class="chip" data-filter="pendientes">Pendientes</button>
-    </div>
-
-    <div id="participacion-list" class="part-grid"></div>
-
-    <div class="card" style="margin-top:18px;">
-      <div><span class="cat-title">💾 Respaldo de votos</span></div>
-      <div class="cat-desc">Descarga una copia de todos los votos guardados hasta ahora en un archivo CSV (se abre en Excel). Útil para guardar una copia antes de cerrar las votaciones.</div>
-      <button class="btn-ghost" id="export-backup-btn" style="width:100%; text-align:center; padding:12px;">📥 Descargar respaldo (CSV)</button>
-    </div>
-  </section>
-
-  <!-- RESULTADOS -->
-  <section id="panel-resultados" class="tab-panel">
-    <div class="res-head">
-      <h2>Resultados</h2>
-      <button class="btn-ghost" id="refresh-results">Actualizar</button>
-    </div>
-    <p class="muted-small" id="total-votes-label">Cargando…</p>
-    <div id="global-ranking"></div>
-    <div id="results-list"></div>
-  </section>
-
-  <!-- DIPLOMAS -->
-  <section id="panel-diplomas" class="tab-panel">
-    <div class="res-head">
-      <h2>Diplomas</h2>
-      <button class="btn-ghost no-print" id="refresh-diplomas">Actualizar</button>
-    </div>
-    <p class="muted-small no-print" id="diplomas-hint">Se genera un diploma por cada categoría con al menos un voto.</p>
-    <div class="no-print" style="margin:14px 0 20px;">
-      <button class="btn" id="print-all">🖨️ Imprimir / guardar todos los diplomas</button>
-    </div>
-    <div id="diplomas-list"></div>
-  </section>
+    <p class="pda-votecount" id="pda-votecount">Aún no se han cargado resultados.</p>
+    <div id="pda-results-list"></div>
+  </div>
 
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<canvas id="pda-diploma-canvas" width="1400" height="990" style="display:none;"></canvas>
+
 <script>
-const CATEGORIES = [
-  {id:'cafe', emoji:'☕', title:'Sin café no hay atención', desc:'Para quien necesita cafeína para comenzar el día.'},
-  {id:'csi', emoji:'🔎', title:'CSI Dental', desc:'Para quien encuentra instrumental, materiales o cosas perdidas que nadie más encuentra.'},
-  {id:'rayo', emoji:'🏃‍♀️', title:'Rayo McQueen', desc:'Para quien vive corriendo por el CESFAM.'},
-  {id:'risa', emoji:'😂', title:'Me río de todo', desc:'Para quien siempre termina haciendo reír al equipo.'},
-  {id:'cosita', emoji:'🗣️', title:'Una cosita rápida…', desc:'Para quien dice eso y termina contando una historia de 15 minutos.'},
-  {id:'whatsapp', emoji:'📱', title:'WhatsApp Premium', desc:'Para quien responde los mensajes a velocidad récord.'},
-  {id:'buda', emoji:'🧘‍♀️', title:'Buda Dental', desc:'Para la persona que mantiene la calma incluso cuando la agenda está colapsada.'},
-  {id:'bombero', emoji:'🚨', title:'Bombero/a', desc:'Para quien aparece inmediatamente cuando hay un problema y dice: "¿Qué pasó?"'},
-  {id:'wikipedia', emoji:'🧠', title:'Wikipedia Dental', desc:'Para quien siempre tiene un dato, solución o respuesta para todo.'},
-  {id:'teleserie', emoji:'🎭', title:'Esto merece una teleserie', desc:'Para quien convierte cualquier pequeña situación del día en una historia memorable.'},
-  {id:'yolohago', emoji:'🥇', title:'Yo lo hago', desc:'Para quien siempre está dispuesto a ayudar.'},
-  {id:'companero', emoji:'❤️', title:'Buen compañero/a', desc:'Para quien hace que trabajar sea más agradable.'},
-  {id:'sobreviviente', emoji:'👑', title:'Sobreviviente Dental 2026', desc:'Para quien ha sobrevivido a agendas, pacientes, SIC, reuniones, correos, contingencias y todavía llega con sentido del humor.'},
-  {id:'colacion', emoji:'🥪', title:'Colación Insuperable', desc:'Para quien siempre trae la mejor colación y hace que todos quieran probar un poco.'},
-  {id:'puntualidad', emoji:'⏰', title:'Puntualidad Extrema', desc:'Para quien llega siempre antes que todos, pase lo que pase.'},
-  {id:'fiesta', emoji:'🎉', title:'Alma de la Fiesta', desc:'Para quien organiza los cumpleaños, celebraciones y panoramas del equipo.'},
-  {id:'tetris', emoji:'🧩', title:'Agenda Tetris', desc:'Para quien logra encajar hasta el paciente más imposible en la hora que sea.'},
-  {id:'creativo', emoji:'🎨', title:'Toque Creativo', desc:'Para quien decora, diseña o le pone color a cada actividad del equipo.'},
-  {id:'multitasking', emoji:'🙌', title:'Multitasking Nivel Dios', desc:'Para quien hace mil cosas a la vez sin perder la cabeza (ni la sonrisa).'},
-  {id:'organizado', emoji:'📚', title:'El/la Más Organizado/a', desc:'Para quien tiene todo etiquetado, ordenado y a la mano cuando nadie más lo encuentra.'}
-];
+(function(){
 
-const NOMBRES = ['Erika Plaza','Felipe Valdés','Camila Zapata','Debora Sagardia','Mónica Ruminot','Karina Cancino','Ricardo Vargas','Constanza Vera','Stephanie Villarroel','Valentina Soto'];
+  var NOMBRES = ["Erika Plaza","Felipe Valdés","Valentina Soto","Camila Zapata","Ricardo Vargas","Constanza Vera","Stephanie Villarroel","Karina Cancino","Debora Sagardia","Mónica Ruminot"];
 
-function slugify(str){
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-}
+  var CATEGORIAS = [
+    {id:"cafe", emoji:"☕", titulo:"Sin café no hay atención", desc:"Para quien necesita cafeína para comenzar el día.", frase:"Tu energía matutina mueve al equipo entero."},
+    {id:"csi", emoji:"🔎", titulo:"CSI Dental", desc:"Para quien encuentra instrumental, materiales o cosas perdidas que nadie más encuentra.", frase:"Ningún misterio se resiste a tu ojo clínico."},
+    {id:"rayo", emoji:"🏃‍♀️", titulo:"Rayo McQueen", desc:"Para quien vive corriendo por el CESFAM.", frase:"Kachow: la velocidad es tu sello personal."},
+    {id:"risa", emoji:"😂", titulo:"Me río de todo", desc:"Para quien siempre termina haciendo reír al equipo.", frase:"Tu risa es el mejor tratamiento sin receta."},
+    {id:"cosita", emoji:"🗣️", titulo:"Una cosita rápida…", desc:"Para quien dice eso y termina contando una historia de 15 minutos.", frase:"Nadie cuenta una anécdota como tú."},
+    {id:"whatsapp", emoji:"📱", titulo:"WhatsApp Premium", desc:"Para quien responde los mensajes a velocidad récord.", frase:"Doble check azul en tiempo récord, siempre."},
+    {id:"buda", emoji:"🧘‍♀️", titulo:"Buda Dental", desc:"Para la persona que mantiene la calma incluso cuando la agenda está colapsada.", frase:"Tu calma sostiene al equipo en los días difíciles."},
+    {id:"bombero", emoji:"🚨", titulo:"Bombero/a", desc:"Para quien aparece inmediatamente cuando hay un problema y dice: “¿Qué pasó?”", frase:"Donde hay una emergencia, ahí estás tú primero."},
+    {id:"wikipedia", emoji:"🧠", titulo:"Wikipedia Dental", desc:"Para quien siempre tiene un dato, solución o respuesta para todo.", frase:"Tu conocimiento resuelve lo que Google no puede."},
+    {id:"telenovela", emoji:"🎭", titulo:"Esto merece una teleserie", desc:"Para quien convierte cualquier pequeña situación del día en una historia memorable.", frase:"Contigo, hasta un día común se vuelve inolvidable."},
+    {id:"yolo", emoji:"🥇", titulo:"Yo lo hago", desc:"Para quien siempre está dispuesto/a a ayudar.", frase:"Tu disposición es el ejemplo que todos deberíamos seguir."},
+    {id:"companero", emoji:"❤️", titulo:"Buen compañero/a", desc:"Para quien hace que trabajar sea más agradable.", frase:"Trabajar contigo hace que todo sea más liviano."},
+    {id:"sobreviviente", emoji:"👑", titulo:"Sobreviviente Dental 2026", desc:"Para quien ha sobrevivido a agendas, pacientes, SIC, reuniones, correos, contingencias y todavía llega con sentido del humor.", frase:"Sobreviviste a todo y aún así sonríes: eso es grandeza."},
+    {id:"agenda", emoji:"📅", titulo:"Master en Agenda", desc:"Para quien domina la agenda como nadie.", frase:"Ordenas el caos como nadie más podría."},
+    {id:"orden", emoji:"🧹", titulo:"Orden es mi lema", desc:"Para quien mantiene todo impecable y ordenado.", frase:"Tu orden es el silencioso motor del equipo."},
+    {id:"cumple", emoji:"🎂", titulo:"Nunca olvida un cumpleaños", desc:"Para quien siempre celebra a los compañeros.", frase:"Haces que cada cumpleaños se sienta especial."},
+    {id:"snack", emoji:"🍫", titulo:"Snack Time", desc:"Para quien siempre tiene algo rico para compartir.", frase:"Tu generosidad se saborea, literalmente."},
+    {id:"punteria", emoji:"🎯", titulo:"Puntería perfecta", desc:"Para quien nunca falla en un procedimiento o diagnóstico.", frase:"La precisión es tu firma en cada atención."},
+    {id:"estudiante", emoji:"📚", titulo:"Estudiante eterno/a", desc:"Para quien siempre está capacitándose y aprendiendo cosas nuevas.", frase:"Nunca dejas de crecer, y eso inspira a todos."},
+    {id:"alma", emoji:"🌟", titulo:"Alma del equipo", desc:"Para quien es el corazón que mantiene unido al grupo.", frase:"Sin ti, este equipo no sería el mismo."}
+  ];
 
-// URL del Google Apps Script conectado a la planilla de Google Sheets.
-const SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxxrz_qT1Ak3VbyHR5ySgSGHcx0kJcdBVxRLA2DPZVccOj2JSWofvx3xc9-h1u3AVQl/exec';
+  var lastTallies = null;   // {catId: {name: count}}
+  var lastRawVotes = [];    // [{voter, ts, selections}]
+  var lastTotalVotantes = 0;
 
-// ---------- Build voting form ----------
-const voterSelect = document.getElementById('voter-select');
-NOMBRES.forEach(n=>{
-  const o = document.createElement('option'); o.value = n; o.textContent = n;
-  voterSelect.appendChild(o);
-});
+  function $(id){ return document.getElementById(id); }
 
-const catListEl = document.getElementById('categories-list');
-CATEGORIES.forEach(cat=>{
-  const card = document.createElement('div');
-  card.className = 'card';
-  card.innerHTML = `
-    <div><span class="cat-emoji">${cat.emoji}</span><span class="cat-title">${cat.title}</span></div>
-    <div class="cat-desc">${cat.desc}</div>
-    <select id="sel-${cat.id}" data-cat="${cat.id}">
-      <option value="">Sin voto en esta categoría</option>
-      ${NOMBRES.map(n=>`<option value="${n}">${n}</option>`).join('')}
-    </select>
-  `;
-  catListEl.appendChild(card);
-});
-
-function showBanner(msg, type){
-  const b = document.getElementById('banner');
-  b.textContent = msg;
-  b.className = 'banner show ' + type;
-}
-
-// Aviso no bloqueante si detecta navegador embebido (WhatsApp/Instagram/Facebook).
-(function checkInAppBrowser(){
-  const ua = navigator.userAgent || '';
-  const isInApp = /FBAN|FBAV|Instagram|WhatsApp/i.test(ua);
-  if(isInApp){
-    showBanner('Estás en el navegador interno de WhatsApp/Instagram. Si el voto no se guarda, toca ⋮ o el ícono de compartir y elige "Abrir en el navegador".', 'err');
-  }
-})();
-
-// Prefill previous vote when voter changes
-voterSelect.addEventListener('change', async ()=>{
-  const name = voterSelect.value;
-  document.getElementById('banner').className = 'banner';
-  CATEGORIES.forEach(c=>{ document.getElementById('sel-'+c.id).value = ''; });
-  if(!name) return;
-  try{
-    const key = 'voto:' + slugify(name);
-    const res = await window.storage.get(key, true);
-    if(res && res.value){
-      const data = JSON.parse(res.value);
-      Object.entries(data.selections || {}).forEach(([catId, nominee])=>{
-        const sel = document.getElementById('sel-'+catId);
-        if(sel) sel.value = nominee;
-      });
-      showBanner('Ya tenías votos guardados — puedes modificarlos y volver a enviar.', 'ok');
-    }
-  }catch(e){ /* no previous vote, that's fine */ }
-});
-
-document.getElementById('submit-btn').addEventListener('click', async ()=>{
-  const name = voterSelect.value;
-  if(!name){ showBanner('Primero selecciona quién eres.', 'err'); return; }
-  const selections = {};
-  CATEGORIES.forEach(c=>{
-    const v = document.getElementById('sel-'+c.id).value;
-    if(v) selections[c.id] = v;
+  // ---------- Render: voter select ----------
+  var voterSelect = $("pda-voter-select");
+  NOMBRES.forEach(function(n){
+    var o = document.createElement("option");
+    o.value = n; o.textContent = n;
+    voterSelect.appendChild(o);
   });
-  if(Object.keys(selections).length === 0){
-    showBanner('Elige al menos una categoría antes de enviar.', 'err');
-    return;
-  }
-  const btn = document.getElementById('submit-btn');
-  btn.disabled = true; btn.textContent = 'Guardando…';
 
-  let storageOk = false;
-  let sheetOk = false;
+  // ---------- Render: program list ----------
+  var programList = $("pda-program-list");
+  CATEGORIAS.forEach(function(cat, idx){
+    var li = document.createElement("li");
+    li.className = "pda-item";
 
-  try{
-    const key = 'voto:' + slugify(name);
-    await window.storage.set(key, JSON.stringify({voter:name, timestamp:Date.now(), selections}), true);
-    storageOk = true;
-  }catch(e){ storageOk = false; }
+    var num = document.createElement("div");
+    num.className = "pda-num";
+    num.textContent = (idx+1);
 
-  try{
-    const res = await fetch(SHEETS_WEBAPP_URL, {
-      method: 'POST',
-      headers: {'Content-Type': 'text/plain;charset=utf-8'},
-      body: JSON.stringify({voter:name, selections})
+    var body = document.createElement("div");
+
+    var title = document.createElement("div");
+    title.className = "pda-item-title";
+    title.textContent = cat.emoji + " " + cat.titulo;
+
+    var desc = document.createElement("div");
+    desc.className = "pda-item-desc";
+    desc.textContent = cat.desc;
+
+    var sel = document.createElement("select");
+    sel.className = "pda-select";
+    sel.id = "pda-sel-" + cat.id;
+    var opt0 = document.createElement("option");
+    opt0.value=""; opt0.textContent="Elige a alguien…";
+    sel.appendChild(opt0);
+    NOMBRES.forEach(function(n){
+      var o = document.createElement("option");
+      o.value=n; o.textContent=n;
+      sel.appendChild(o);
     });
-    const data = await res.json();
-    sheetOk = !!(data && data.ok);
-  }catch(e){ sheetOk = false; }
 
-  if(storageOk || sheetOk){
-    showBanner('¡Listo, ' + name + '! Tus votos quedaron registrados.', 'ok');
-    if(typeof window.confetti === 'function'){
-      window.confetti({particleCount:120, spread:80, startVelocity:38, origin:{y:0.6}, colors:['#E8B84B','#FF6F59','#F6EFE3','#C6952A']});
-    }
-  }else{
-    showBanner('No se pudo guardar el voto. Revisa tu conexión e intenta de nuevo.', 'err');
-  }
-  btn.disabled = false; btn.textContent = 'Enviar mis votos';
-});
-
-// ---------- Tabs ----------
-document.querySelectorAll('.tab-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
-    if(btn.dataset.tab === 'resultados') loadResults();
-    if(btn.dataset.tab === 'diplomas') loadDiplomas();
-    if(btn.dataset.tab === 'participacion') loadParticipacion();
+    body.appendChild(title);
+    body.appendChild(desc);
+    body.appendChild(sel);
+    li.appendChild(num);
+    li.appendChild(body);
+    programList.appendChild(li);
   });
-});
 
-// ---------- Shared data ----------
-async function fetchAllVotes(){
-  try{
-    const listRes = await window.storage.list('voto:', true);
-    if(!listRes || !listRes.keys || listRes.keys.length === 0) return [];
-    const votes = [];
-    for(const k of listRes.keys){
+  // ---------- Tabs ----------
+  var tabVotar = $("pda-tab-votar");
+  var tabResultados = $("pda-tab-resultados");
+  var viewVotar = $("pda-view-votar");
+  var viewResultados = $("pda-view-resultados");
+
+  tabVotar.addEventListener("click", function(){
+    tabVotar.classList.add("active");
+    tabResultados.classList.remove("active");
+    viewVotar.hidden = false;
+    viewResultados.hidden = true;
+  });
+  tabResultados.addEventListener("click", function(){
+    tabResultados.classList.add("active");
+    tabVotar.classList.remove("active");
+    viewResultados.hidden = false;
+    viewVotar.hidden = true;
+    refreshResults();
+  });
+
+  // ---------- Submit votes ----------
+  var statusEl = $("pda-vote-status");
+
+  $("pda-submit").addEventListener("click", async function(){
+    statusEl.className = "pda-status";
+    statusEl.textContent = "";
+
+    var voter = voterSelect.value;
+    if(!voter){
+      statusEl.className = "pda-status err";
+      statusEl.textContent = "Primero selecciona tu nombre.";
+      return;
+    }
+
+    var selections = {};
+    var faltantes = [];
+    CATEGORIAS.forEach(function(cat){
+      var v = $("pda-sel-"+cat.id).value;
+      if(v){ selections[cat.id] = v; }
+      else { faltantes.push(cat.titulo); }
+    });
+
+    if(faltantes.length > 0){
+      statusEl.className = "pda-status err";
+      statusEl.textContent = "Te faltan " + faltantes.length + " categorías por votar.";
+      return;
+    }
+
+    try{
+      var payload = { voter: voter, ts: Date.now(), selections: selections };
+      var result = await window.storage.set("voto:" + voter, JSON.stringify(payload), true);
+      if(!result){
+        statusEl.className = "pda-status err";
+        statusEl.textContent = "No se pudo guardar tu voto. Intenta de nuevo.";
+        return;
+      }
+      statusEl.className = "pda-status ok";
+      statusEl.textContent = "¡Listo, " + voter + "! Tus votos quedaron guardados. 🎉";
+      if(typeof confetti === "function"){
+        confetti({ particleCount: 140, spread: 80, origin:{y:0.6}, colors:["#E3A72B","#FF6B5E","#2FA79B","#FFF7E6"] });
+      }
+    }catch(e){
+      statusEl.className = "pda-status err";
+      statusEl.textContent = "Ocurrió un error guardando tu voto.";
+    }
+  });
+
+  // ---------- Results ----------
+  var votecountEl = $("pda-votecount");
+  var resultsList = $("pda-results-list");
+
+  async function refreshResults(){
+    votecountEl.textContent = "Cargando resultados…";
+    resultsList.innerHTML = "";
+
+    var keysResult;
+    try{
+      keysResult = await window.storage.list("voto:", true);
+    }catch(e){
+      votecountEl.textContent = "No se pudieron cargar los resultados.";
+      return;
+    }
+    var keys = (keysResult && keysResult.keys) ? keysResult.keys : [];
+
+    var votes = [];
+    for(var i=0;i<keys.length;i++){
       try{
-        const r = await window.storage.get(k, true);
-        if(r && r.value) votes.push(JSON.parse(r.value));
+        var r = await window.storage.get(keys[i], true);
+        if(r && r.value){
+          votes.push(JSON.parse(r.value));
+        }
       }catch(e){ /* skip unreadable entry */ }
     }
-    return votes;
-  }catch(e){ return []; }
-}
 
-function tally(votes){
-  const result = {};
-  CATEGORIES.forEach(c=> result[c.id] = {});
-  votes.forEach(v=>{
-    Object.entries(v.selections || {}).forEach(([catId, nombre])=>{
-      if(!result[catId]) result[catId] = {};
-      result[catId][nombre] = (result[catId][nombre] || 0) + 1;
-    });
-  });
-  return result;
-}
+    lastRawVotes = votes;
+    lastTotalVotantes = votes.length;
 
-function winnersOf(counts){
-  const entries = Object.entries(counts);
-  if(entries.length === 0) return {names:[], max:0};
-  const max = Math.max(...entries.map(([,c])=>c));
-  const names = entries.filter(([,c])=>c===max).map(([n])=>n);
-  return {names, max};
-}
+    var tallies = {};
+    CATEGORIAS.forEach(function(cat){ tallies[cat.id] = {}; });
 
-// ---------- Participación (quién votó / quién falta) ----------
-let currentPartFilter = 'todos';
-
-document.querySelectorAll('.part-filter .chip').forEach(chip=>{
-  chip.addEventListener('click', ()=>{
-    document.querySelectorAll('.part-filter .chip').forEach(c=>c.classList.remove('active'));
-    chip.classList.add('active');
-    currentPartFilter = chip.dataset.filter;
-    renderParticipacionList(window.__lastVotes || []);
-  });
-});
-
-function renderParticipacionList(votes){
-  const votedNames = new Set(votes.map(v=>v.voter));
-  const listEl = document.getElementById('participacion-list');
-  let names = NOMBRES.slice();
-  if(currentPartFilter === 'votaron') names = names.filter(n=>votedNames.has(n));
-  if(currentPartFilter === 'pendientes') names = names.filter(n=>!votedNames.has(n));
-
-  // Votaron primero dentro de "todos" también se ve bien ordenado alfabético; dejamos alfabético estable
-  if(names.length === 0){
-    listEl.innerHTML = '<div class="empty">Nadie en este filtro por ahora.</div>';
-    return;
-  }
-
-  listEl.innerHTML = names.map(name=>{
-    const voted = votedNames.has(name);
-    const voteData = voted ? votes.find(v=>v.voter===name) : null;
-    const catCount = voteData ? Object.keys(voteData.selections||{}).length : 0;
-    return `
-      <div class="part-row">
-        <span class="name">${name}</span>
-        ${voted
-          ? `<span class="status-pill voted">✅ Votó · ${catCount} cat.</span>`
-          : `<span class="status-pill pending">⏳ Pendiente</span>`
+    votes.forEach(function(v){
+      if(!v || !v.selections) return;
+      CATEGORIAS.forEach(function(cat){
+        var chosen = v.selections[cat.id];
+        if(chosen){
+          tallies[cat.id][chosen] = (tallies[cat.id][chosen] || 0) + 1;
         }
-      </div>`;
-  }).join('');
-}
-
-async function loadParticipacion(){
-  const listEl = document.getElementById('participacion-list');
-  listEl.innerHTML = '<div class="empty">Cargando participación…</div>';
-  const votes = await fetchAllVotes();
-  window.__lastVotes = votes;
-  const votedNames = new Set(votes.map(v=>v.voter));
-  const votedCount = NOMBRES.filter(n=>votedNames.has(n)).length;
-  const pct = NOMBRES.length ? Math.round((votedCount/NOMBRES.length)*100) : 0;
-
-  document.getElementById('part-progress-fill').style.width = pct + '%';
-  document.getElementById('part-progress-pct').textContent = pct + '%';
-  document.getElementById('part-summary-label').textContent =
-    votedCount + ' de ' + NOMBRES.length + ' personas han votado' + (pct===100 ? ' — ¡completo! 🎉' : '.');
-
-  renderParticipacionList(votes);
-}
-document.getElementById('refresh-participacion').addEventListener('click', loadParticipacion);
-
-// ---------- Respaldo CSV ----------
-function csvEscape(val){
-  const s = String(val ?? '');
-  if(/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
-  return s;
-}
-
-document.getElementById('export-backup-btn').addEventListener('click', async ()=>{
-  const btn = document.getElementById('export-backup-btn');
-  const originalText = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Generando…';
-  try{
-    const votes = await fetchAllVotes();
-    const header = ['Votante', 'Fecha y hora', ...CATEGORIES.map(c=>c.title)];
-    const rows = [header];
-    NOMBRES.forEach(name=>{
-      const v = votes.find(x=>x.voter===name);
-      const fecha = v ? new Date(v.timestamp).toLocaleString('es-CL') : '';
-      const row = [name, fecha];
-      CATEGORIES.forEach(cat=>{
-        row.push(v && v.selections ? (v.selections[cat.id] || '') : '');
       });
-      rows.push(row);
     });
-    const csvContent = rows.map(r=>r.map(csvEscape).join(',')).join('\r\n');
-    const blob = new Blob(['\uFEFF' + csvContent], {type:'text/csv;charset=utf-8;'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const dateTag = new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
-    a.href = url; a.download = 'respaldo-votos-dental-awards-' + dateTag + '.csv';
-    document.body.appendChild(a); a.click(); a.remove();
-    URL.revokeObjectURL(url);
-  }catch(e){
-    alert('No se pudo generar el respaldo. Intenta de nuevo.');
-  }finally{
-    btn.disabled = false; btn.textContent = originalText;
-  }
-});
+    lastTallies = tallies;
 
-// ---------- Results ----------
-function renderGlobalRanking(votes){
-  const container = document.getElementById('global-ranking');
-  if(votes.length === 0){ container.innerHTML = ''; return; }
-  const totals = {};
-  votes.forEach(v=>{
-    Object.values(v.selections || {}).forEach(name=>{
-      totals[name] = (totals[name] || 0) + 1;
-    });
-  });
-  const entries = Object.entries(totals).sort((a,b)=>b[1]-a[1]);
-  if(entries.length === 0){ container.innerHTML = ''; return; }
-  const max = entries[0][1];
-  const rows = entries.map(([name,count])=>{
-    const isTop = count === max;
-    const pct = Math.round((count/max)*100);
-    return `
-      <div class="bar-row">
-        <div class="bar-row-top">
-          <span class="bar-name ${isTop?'winner':''}">${isTop?'🎖️ ':''}${name}</span>
-          <span class="muted-small">${count}</span>
-        </div>
-        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
-      </div>`;
-  }).join('');
-  container.innerHTML = `
-    <div class="card">
-      <div><span class="cat-title">🎖️ Ranking general</span></div>
-      <div class="cat-desc">Menciones totales recibidas, sumando las ${CATEGORIES.length} categorías.</div>
-      <div style="margin-top:6px;">${rows}</div>
-    </div>`;
-}
+    votecountEl.textContent = votes.length + " de " + NOMBRES.length + " personas han votado.";
 
-async function loadResults(){
-  const listEl = document.getElementById('results-list');
-  const totalLabel = document.getElementById('total-votes-label');
-  listEl.innerHTML = '<div class="empty">Cargando resultados…</div>';
-  const votes = await fetchAllVotes();
-  window.__lastVotes = votes;
-  const votedCount = NOMBRES.filter(n=>votes.some(v=>v.voter===n)).length;
-  totalLabel.textContent = votedCount + ' de ' + NOMBRES.length + ' personas han votado';
-  renderGlobalRanking(votes);
-  if(votes.length === 0){
-    listEl.innerHTML = '<div class="empty">Aún no hay votos. ¡Sé el primero en votar! 🏆</div>';
-    return;
-  }
-  const t = tally(votes);
-  listEl.innerHTML = '';
-  CATEGORIES.forEach(cat=>{
-    const counts = t[cat.id] || {};
-    const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
-    const {max} = winnersOf(counts);
-    const card = document.createElement('div');
-    card.className = 'card';
-    let rows = '';
-    if(entries.length === 0){
-      rows = '<div class="muted-small">Sin votos todavía.</div>';
-    }else{
-      rows = entries.map(([name,count])=>{
-        const isWinner = count === max;
-        const pct = Math.round((count/max)*100);
-        return `
-          <div class="bar-row">
-            <div class="bar-row-top">
-              <span class="bar-name ${isWinner?'winner':''}">${isWinner?'🏆 ':''}${name}</span>
-              <span class="muted-small">${count}</span>
-            </div>
-            <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
-          </div>`;
-      }).join('');
-    }
-    card.innerHTML = `<div><span class="cat-emoji">${cat.emoji}</span><span class="cat-title">${cat.title}</span></div><div style="margin-top:12px;">${rows}</div>`;
-    listEl.appendChild(card);
-  });
-}
-document.getElementById('refresh-results').addEventListener('click', loadResults);
+    CATEGORIAS.forEach(function(cat){
+      var tally = tallies[cat.id];
+      var entries = Object.keys(tally).map(function(name){ return [name, tally[name]]; });
+      entries.sort(function(a,b){ return b[1]-a[1]; });
 
-// ---------- Diplomas ----------
-const DIPLOMA_MESSAGES = [
-  'Eres una parte muy valiosa de este equipo. ¡Siéntete profundamente orgulloso/a! 🌟',
-  'Gracias por todo lo que entregas cada día. Este equipo es mejor contigo. 💛',
-  'Tu forma de ser hace la diferencia. ¡Sigue brillando así! ✨',
-  'Cada día demuestras lo valioso/a que eres. ¡Que se note el orgullo! 🎉'
-];
+      var max = entries.length ? entries[0][1] : 0;
+      var winners = entries.filter(function(e){ return e[1]===max; }).map(function(e){ return e[0]; });
 
-function diplomaMarkup(cat, winnerNames){
-  const dateStr = new Date().toLocaleDateString('es-CL', {year:'numeric', month:'long'});
-  const domId = 'diploma-' + cat.id;
-  const filename = 'diploma-' + cat.id + '.png';
-  const message = DIPLOMA_MESSAGES[Math.abs(cat.id.split('').reduce((a,c)=>a+c.charCodeAt(0),0)) % DIPLOMA_MESSAGES.length];
-  return `
-    <div class="diploma-card-wrap">
-      <div class="diploma-frame" id="${domId}">
-        <div class="diploma">
-          <span class="confetti-dot dot-a"></span>
-          <span class="confetti-dot dot-b"></span>
-          <span class="confetti-dot dot-c"></span>
-          <span class="confetti-dot dot-d"></span>
-          <div class="diploma-eyebrow">Premios Dental Awards 2026</div>
-          <div class="diploma-cat">${cat.emoji} ${cat.title}</div>
-          <div class="diploma-divider"></div>
-          <div class="diploma-given">se otorga con cariño a</div>
-          <div class="diploma-name">${winnerNames.join(' & ')}</div>
-          <div class="diploma-desc">${cat.desc}</div>
-          <div class="diploma-message">${message}</div>
-          <div class="diploma-date">Reconocimiento del equipo — ${dateStr}</div>
-        </div>
-      </div>
-      <div class="no-print diploma-actions">
-        <button class="btn-ghost diploma-download-btn" data-target="${domId}" data-filename="${filename}">📥 Descargar imagen (WhatsApp)</button>
-      </div>
-    </div>`;
-}
+      var card = document.createElement("div");
+      card.className = "pda-result-card";
 
-async function downloadDiploma(targetId, filename, btn){
-  if(typeof window.html2canvas !== 'function'){
-    alert('No se pudo cargar el generador de imágenes. Prueba de nuevo o usa "Imprimir todos".');
-    return;
-  }
-  const el = document.getElementById(targetId);
-  if(!el) return;
-  const originalText = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Generando…';
-  try{
-    const canvas = await window.html2canvas(el, {scale:2, useCORS:true, backgroundColor:null});
-    canvas.toBlob(async (blob)=>{
-      if(!blob){ btn.disabled=false; btn.textContent=originalText; return; }
-      const file = new File([blob], filename, {type:'image/png'});
-      if(navigator.canShare && navigator.canShare({files:[file]})){
-        try{
-          await navigator.share({files:[file], title: filename});
-          btn.disabled = false; btn.textContent = originalText;
-          return;
-        }catch(shareErr){ /* usuario canceló el share, seguimos con descarga */ }
+      var head = document.createElement("div");
+      head.className = "pda-result-head";
+      head.textContent = cat.emoji + " " + cat.titulo;
+      card.appendChild(head);
+
+      if(max > 0){
+        var win = document.createElement("div");
+        win.className = "pda-result-winner";
+        win.innerHTML = "🏆 " + winners.join(" y ") + " <span class=\"pda-result-winner-votes\">(" + max + (max===1?" voto":" votos") + ")</span>";
+        card.appendChild(win);
+
+        var btn = document.createElement("button");
+        btn.className = "pda-btn-diploma";
+        btn.type = "button";
+        btn.textContent = "🎓 Descargar diploma";
+        btn.addEventListener("click", function(catId, winnerNames){
+          return function(){ generarDiploma(catId, winnerNames); };
+        }(cat.id, winners.join(" y ")));
+        card.appendChild(btn);
+      } else {
+        var empty = document.createElement("div");
+        empty.className = "pda-result-empty";
+        empty.textContent = "Aún no hay votos para esta categoría.";
+        card.appendChild(empty);
       }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = filename;
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
-      btn.disabled = false; btn.textContent = originalText;
-    }, 'image/png');
-  }catch(e){
-    btn.disabled = false; btn.textContent = originalText;
-    alert('No se pudo generar la imagen. Intenta de nuevo.');
-  }
-}
 
-document.getElementById('diplomas-list').addEventListener('click', (e)=>{
-  const btn = e.target.closest('.diploma-download-btn');
-  if(!btn) return;
-  downloadDiploma(btn.dataset.target, btn.dataset.filename, btn);
-});
+      if(entries.length){
+        var ul = document.createElement("ul");
+        ul.className = "pda-bars";
+        entries.forEach(function(e){
+          var pct = lastTotalVotantes>0 ? Math.max(6, Math.round(e[1]/lastTotalVotantes*100)) : 0;
+          var li = document.createElement("li");
+          li.innerHTML = "<span>"+e[0]+"</span><div class=\"pda-bar-track\"><div class=\"pda-bar-fill\" style=\"width:"+pct+"%\"></div></div><span>"+e[1]+"</span>";
+          ul.appendChild(li);
+        });
+        card.appendChild(ul);
+      }
 
-async function loadDiplomas(){
-  const listEl = document.getElementById('diplomas-list');
-  const hint = document.getElementById('diplomas-hint');
-  listEl.innerHTML = '<div class="empty">Cargando diplomas…</div>';
-  const votes = await fetchAllVotes();
-  if(votes.length === 0){
-    listEl.innerHTML = '<div class="empty">Todavía no hay votos suficientes para entregar diplomas.</div>';
-    hint.textContent = '';
-    return;
+      resultsList.appendChild(card);
+    });
   }
-  const t = tally(votes);
-  listEl.innerHTML = '';
-  let count = 0;
-  CATEGORIES.forEach(cat=>{
-    const counts = t[cat.id] || {};
-    const {names, max} = winnersOf(counts);
-    if(names.length === 0 || max === 0) return;
-    count++;
-    listEl.insertAdjacentHTML('beforeend', diplomaMarkup(cat, names));
+
+  $("pda-refresh").addEventListener("click", refreshResults);
+
+  // ---------- Excel export ----------
+  $("pda-export").addEventListener("click", function(){
+    if(!lastTallies){
+      alert("Primero pulsa “Actualizar resultados”.");
+      return;
+    }
+    if(typeof XLSX === "undefined"){
+      alert("No se pudo cargar el módulo de Excel. Intenta de nuevo en unos segundos.");
+      return;
+    }
+
+    var resumenRows = [["Categoría","Ganador/a","Votos"]];
+    CATEGORIAS.forEach(function(cat){
+      var tally = lastTallies[cat.id] || {};
+      var entries = Object.keys(tally).map(function(name){ return [name, tally[name]]; });
+      entries.sort(function(a,b){ return b[1]-a[1]; });
+      var max = entries.length ? entries[0][1] : 0;
+      var winners = entries.filter(function(e){ return e[1]===max; }).map(function(e){ return e[0]; });
+      resumenRows.push([cat.emoji + " " + cat.titulo, max>0 ? winners.join(" y ") : "(sin votos)", max]);
+    });
+
+    var detalleRows = [["Votante","Categoría","Persona elegida"]];
+    lastRawVotes.forEach(function(v){
+      CATEGORIAS.forEach(function(cat){
+        var chosen = v.selections ? v.selections[cat.id] : "";
+        if(chosen){ detalleRows.push([v.voter, cat.titulo, chosen]); }
+      });
+    });
+
+    var wb = XLSX.utils.book_new();
+    var ws1 = XLSX.utils.aoa_to_sheet(resumenRows);
+    var ws2 = XLSX.utils.aoa_to_sheet(detalleRows);
+    ws1["!cols"] = [{wch:34},{wch:26},{wch:8}];
+    ws2["!cols"] = [{wch:22},{wch:34},{wch:22}];
+    XLSX.utils.book_append_sheet(wb, ws1, "Resultados");
+    XLSX.utils.book_append_sheet(wb, ws2, "Detalle de votos");
+    XLSX.writeFile(wb, "Premios_Dental_Awards_2026.xlsx");
   });
-  hint.textContent = count + ' diploma' + (count===1?'':'s') + ' generado' + (count===1?'':'s') + ' hasta ahora. Se actualizan solos con más votos.';
-}
-document.getElementById('refresh-diplomas').addEventListener('click', loadDiplomas);
-document.getElementById('print-all').addEventListener('click', ()=> window.print());
 
-// ---------- Init ----------
-loadResults();
-loadParticipacion();
+  // ---------- Diploma (canvas) ----------
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+    var words = text.split(" ");
+    var line = "";
+    var lines = [];
+    for(var n=0;n<words.length;n++){
+      var testLine = line + words[n] + " ";
+      if(ctx.measureText(testLine).width > maxWidth && n > 0){
+        lines.push(line.trim());
+        line = words[n] + " ";
+      } else {
+        line = testLine;
+      }
+    }
+    lines.push(line.trim());
+    var startY = y - ((lines.length-1)*lineHeight)/2;
+    lines.forEach(function(l, i){
+      ctx.fillText(l, x, startY + i*lineHeight);
+    });
+  }
+
+  async function generarDiploma(catId, winnerNames){
+    var cat = CATEGORIAS.filter(function(c){ return c.id===catId; })[0];
+    if(!cat) return;
+
+    try{
+      await Promise.all([
+        document.fonts.load('800 60px "Baloo 2"'),
+        document.fonts.load('700 30px "Baloo 2"'),
+        document.fonts.load('700 70px "Dancing Script"'),
+        document.fonts.load('italic 26px "Karla"'),
+        document.fonts.load('700 24px "Karla"')
+      ]);
+    }catch(e){ /* fonts may fail to preload; canvas will fall back gracefully */ }
+
+    var canvas = $("pda-diploma-canvas");
+    var ctx = canvas.getContext("2d");
+    var W = canvas.width, H = canvas.height;
+
+    // background
+    ctx.fillStyle = "#FFF7E6";
+    ctx.fillRect(0,0,W,H);
+    var vign = ctx.createRadialGradient(W/2,H/2,H*0.25,W/2,H/2,H*0.75);
+    vign.addColorStop(0,"rgba(0,0,0,0)");
+    vign.addColorStop(1,"rgba(74,25,66,0.10)");
+    ctx.fillStyle = vign;
+    ctx.fillRect(0,0,W,H);
+
+    // outer gold border
+    ctx.strokeStyle = "#E3A72B";
+    ctx.lineWidth = 10;
+    ctx.strokeRect(28,28,W-56,H-56);
+    // inner coral border
+    ctx.strokeStyle = "#FF6B5E";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(50,50,W-100,H-100);
+
+    // corner flourishes
+    ctx.fillStyle = "#E3A72B";
+    [[70,70],[W-70,70],[70,H-70],[W-70,H-70]].forEach(function(p){
+      ctx.beginPath();
+      ctx.arc(p[0],p[1],9,0,Math.PI*2);
+      ctx.fill();
+    });
+
+    // ribbon header
+    var ribbonH = 118;
+    var ribbonGrad = ctx.createLinearGradient(0,0,W,0);
+    ribbonGrad.addColorStop(0,"#FF6B5E");
+    ribbonGrad.addColorStop(1,"#E3A72B");
+    ctx.fillStyle = ribbonGrad;
+    ctx.fillRect(80,80,W-160,ribbonH);
+    ctx.fillStyle = "#FFF7E6";
+    ctx.textAlign = "center";
+    ctx.font = "800 40px 'Baloo 2', sans-serif";
+    ctx.fillText("🏆 PREMIOS DENTAL AWARDS 2026 🏆", W/2, 80+ribbonH/2+14);
+
+    // "certificado de reconocimiento"
+    ctx.fillStyle = "#6b5a86";
+    ctx.font = "700 22px 'Karla', sans-serif";
+    ctx.textAlign = "center";
+    var y = 80+ribbonH+52;
+    ctx.save();
+    ctx.letterSpacing = "3px";
+    ctx.fillText("CERTIFICADO DE RECONOCIMIENTO", W/2, y);
+    ctx.restore();
+
+    // category
+    y += 62;
+    ctx.fillStyle = "#241436";
+    ctx.font = "700 34px 'Baloo 2', sans-serif";
+    ctx.fillText(cat.emoji + "  " + cat.titulo, W/2, y);
+
+    // "se otorga a"
+    y += 56;
+    ctx.fillStyle = "#6b5a86";
+    ctx.font = "italic 24px 'Karla', sans-serif";
+    ctx.fillText("Se otorga con cariño a", W/2, y);
+
+    // winner name
+    y += 92;
+    ctx.fillStyle = "#2FA79B";
+    var nameFont = winnerNames.length > 26 ? "700 62px" : "700 78px";
+    ctx.font = nameFont + " 'Dancing Script', cursive";
+    ctx.fillText(winnerNames, W/2, y);
+
+    // motivational phrase
+    y += 66;
+    ctx.fillStyle = "#241436";
+    ctx.font = "italic 27px 'Karla', sans-serif";
+    wrapText(ctx, "“" + cat.frase + "”", W/2, y, W-260, 36);
+
+    // footer
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#6b5a86";
+    ctx.font = "600 20px 'Karla', sans-serif";
+    ctx.fillText("CESFAM · Equipo Dental · 2026", 100, H-95);
+
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#B9821E";
+    ctx.font = "700 28px 'Baloo 2', sans-serif";
+    ctx.fillText("🦷🏆", W-100, H-90);
+
+    // signature line
+    ctx.strokeStyle = "#c9b48a";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(100,H-130); ctx.lineTo(360,H-130); ctx.stroke();
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#6b5a86";
+    ctx.font = "500 15px 'Karla', sans-serif";
+    ctx.fillText("Firma del equipo", 100, H-112);
+
+    canvas.toBlob(function(blob){
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      var safeName = winnerNames.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ ]/g,"").replace(/\s+/g,"_");
+      a.href = url;
+      a.download = "Diploma_" + cat.id + "_" + safeName + ".png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+    }, "image/png");
+  }
+
+})();
 </script>
-
-</body>
-</html>
